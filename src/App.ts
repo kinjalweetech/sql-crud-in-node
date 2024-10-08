@@ -75,23 +75,34 @@ AppDataSource.initialize()
       }
     });
 
-    app.delete("/student/:id", async (req: Request, res: Response) => {
-      try {
-        const { id } = req.params;
+    app.delete(
+      "/student/:id",
+      async (req: Request, res: Response): Promise<void> => {
+        try {
+          const { id } = req.params;
 
-        const studentRepositary = AppDataSource.getRepository(Student);
+          const studentRepository = AppDataSource.getRepository(Student);
 
-        const student = await studentRepositary.findOneBy({ id: parseInt(id) });
+          const student = await studentRepository.findOneBy({
+            id: parseInt(id),
+          });
 
-        if (student.affected === 0) {
-          res.status(404).json({ message: "student not found" });
+          if (!student) {
+            res.status(404).json({ message: "Student not found" });
+            return;
+          }
+
+          await studentRepository.remove(student);
+
+          res.json({ message: "Student deleted successfully" });
+          return;
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ message: "Error deleting student details" });
+          return;
         }
-        res.json({ message: "student deleted successfully" });
-      } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: "error deleting student detail" });
       }
-    });
+    );
 
     // Start the server
     app.listen(port, () => {
